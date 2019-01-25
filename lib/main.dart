@@ -8,6 +8,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return new MaterialApp(
       title: 'Startup Name Generator',
+      theme: new ThemeData(
+        primaryColor: Colors.tealAccent,
+      ), 
       home: new RandomWords(),
     );
   }
@@ -44,12 +47,12 @@ class RandomWordsState extends State<RandomWords> {
           )
               .toList();
 
-        return new Scaffold(         // Add 6 lines from here...
+        return new Scaffold(
           appBar: new AppBar(
             title: const Text('Saved Suggestions'),
           ),
           body: new ListView(children: divided),
-        );                           // ... to here.
+        ); 
       },
     ),
   );
@@ -95,9 +98,9 @@ class RandomWordsState extends State<RandomWords> {
       ),
       trailing: new Icon(   
       alreadySaved ? Icons.favorite : Icons.favorite_border,
-      color: alreadySaved ? Colors.red : null,
+      color: alreadySaved ? Colors.tealAccent : null,
       ),
-      onTap: () {      // Add 9 lines from here...
+      onTap: () {
         setState(() {
           if (alreadySaved) {
             _saved.remove(pair);
