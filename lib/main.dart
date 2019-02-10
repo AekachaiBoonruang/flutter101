@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
+import 'package:flutter101/provider/profile_api_provider.dart';
+import 'package:flutter101/model/profile.dart';
+import 'package:english_words/english_words.dart';
 
 void main() => runApp(new MyApp());
 
 class MyApp extends StatelessWidget {
+
+   final Future<Profile> profile;
+   MyApp({Key key, this.profile}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
@@ -11,7 +18,27 @@ class MyApp extends StatelessWidget {
       theme: new ThemeData(
         primaryColor: Colors.tealAccent,
       ), 
-      home: new RandomWords(),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Fetch Data Example'),
+        ),
+        body: Center(
+          child: FutureBuilder<Profile>(
+            future: profile,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text(snapshot.data.name);
+              } else if (snapshot.hasError) {
+                return Text("${snapshot.error}");
+              }
+
+              // By default, show a loading spinner
+              return CircularProgressIndicator();
+            },
+          ),
+        ),
+      ),
+      
     );
   }
 }
