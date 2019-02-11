@@ -1,141 +1,97 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:english_words/english_words.dart';
-import 'package:flutter101/provider/profile_api_provider.dart';
-import 'package:flutter101/model/profile.dart';
-import 'package:english_words/english_words.dart';
+
+import 'package:http/http.dart' as http;
 
 void main() => runApp(new MyApp());
 
 class MyApp extends StatelessWidget {
-
-   final Future<Profile> profile;
-   MyApp({Key key, this.profile}) : super(key: key);
-
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: 'Startup Name Generator',
-      theme: new ThemeData(
-        primaryColor: Colors.tealAccent,
-      ), 
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Fetch Data Example'),
-        ),
-        body: Center(
-          child: FutureBuilder<Profile>(
-            future: profile,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text(snapshot.data.name);
-              } else if (snapshot.hasError) {
-                return Text("${snapshot.error}");
-              }
-
-              // By default, show a loading spinner
-              return CircularProgressIndicator();
-            },
-          ),
-        ),
-      ),
-      
+      home: new MyHomePage(),
     );
   }
 }
 
-class RandomWords extends StatefulWidget {
+class MyHomePage extends StatefulWidget {
   @override
-  RandomWordsState createState() => new RandomWordsState();
+  _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class RandomWordsState extends State<RandomWords> {
-  final List<WordPair> _suggestions = <WordPair>[];
-  final Set<WordPair> _saved = new Set<WordPair>();
-  final TextStyle _biggerFont = const TextStyle(fontSize: 18.0); 
+class _MyHomePageState extends State<MyHomePage> {
+  String url = 'https://randomuser.me/api/?results=15';
+  List data;
+  Future<String> makeRequest() async {
+    var response = await http
+        .get(Uri.encodeFull(url), headers: {"Accept": "application/json"});
 
-  void _pushSaved() {
-  Navigator.of(context).push(
-    new MaterialPageRoute<void>(
-      builder: (BuildContext context) {
-        final Iterable<ListTile> tiles = _saved.map(
-          (WordPair pair) {
-            return new ListTile(
-              title: new Text(
-                pair.asPascalCase,
-                style: _biggerFont,
-              ),
-            );
-          },
-        );
-        final List<Widget> divided = ListTile
-          .divideTiles(
-            context: context,
-            tiles: tiles,
-          )
-              .toList();
-
-        return new Scaffold(
-          appBar: new AppBar(
-            title: const Text('Saved Suggestions'),
-          ),
-          body: new ListView(children: divided),
-        ); 
-      },
-    ),
-  );
+    setState(() {
+      var extractdata = json.decode(response.body);
+      data = extractdata["results"];
+    });
   }
-  
-  @override                                  
+
+  @override
+  void initState() {
+    this.makeRequest();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return new Scaffold (
-      appBar: new AppBar(
-        title: new Text('Startup Name Generator'),
-        actions: <Widget>[     
-          new IconButton(icon: const Icon(Icons.list), onPressed: _pushSaved),
-        ],  
-      ),
-      body: _buildSuggestions(),
-    );   
+    return new Scaffold(
+        appBar: new AppBar(
+          title: new Text('Contact List'),
+        ),
+        body: new ListView.builder(
+            itemCount: data == null ? 0 : data.length,
+            itemBuilder: (BuildContext context, i) {
+              return new ListTile(
+                title: new Text(data[i]["name"]["first"]),
+                subtitle: new Text(data[i]["email"]),
+                leading: new CircleAvatar(
+                  backgroundImage:
+                      new NetworkImage(data[i]["picture"]["thumbnail"]),
+                ),
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      new MaterialPageRoute(
+                          builder: (BuildContext context) =>
+                              new SecondPage(data[i])));
+                },
+              );
+            }
+            )
+            );
   }
+}
 
-  Widget _buildSuggestions() {
-    return new ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemBuilder: (BuildContext _context, int i) {
-
-        if (i.isOdd) {
-          return new Divider();
-        }
-
-        final int index = i ~/ 2;
-        if (index >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10));
-        }
-        return _buildRow(_suggestions[index]);
-      }
-    );
-  }    
-
-  Widget _buildRow(WordPair pair) {
-    final bool alreadySaved = _saved.contains(pair);
-    return new ListTile(
-      title: new Text(
-        pair.asPascalCase,
-        style: _biggerFont,
-      ),
-      trailing: new Icon(   
-      alreadySaved ? Icons.favorite : Icons.favorite_border,
-      color: alreadySaved ? Colors.tealAccent : null,
-      ),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            _saved.remove(pair);
-          } else { 
-            _saved.add(pair); 
-          } 
-        });
-      },  
-    );
-  }                                     
+class SecondPage extends StatelessWidget {
+  SecondPage(this.data);
+  final data;
+  @override
+  Widget build(BuildContext context) => new Scaffold(
+      appBar: new AppBar(title: new Text('Second Page')),
+      body: new Center(
+        child: new Container(
+          width: 150.0,
+          height: 150.0,
+          decoration: new BoxDecoration(
+            color: const Color(0xff7c94b6),
+            image: new DecorationImage(
+              image: new NetworkImage(data["picture"]["large"]),
+              fit: BoxFit.cover,
+            ),
+            borderRadius: new BorderRadius.all(new Radius.circular(75.0)),
+            border: new Border.all(
+              color: Colors.red,
+              width: 4.0,
+            ),
+          ),
+        ),
+      ));
 }
